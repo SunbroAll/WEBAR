@@ -1,0 +1,161 @@
+<?php
+// $loader_title = "Регионы загружаются, пожалуйста, подождите";
+
+wp_head();
+?>
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="shortcut icon" href="/neetykub/favicon.png">
+    <link rel="apple-touch-icon" href="/neetykub/touchicon.png">
+    <script src="/wp-content/themes/yootheme/vendor/assets/uikit/dist/js/uikit.min.js"></script>
+    <script src="/uthoosee/js/aframe-141.min.js"></script>
+    <script src="/uthoosee/js/mindar-image-aframe.prod.js"></script>
+
+    <script>
+    AFRAME.registerComponent("mytarget", {
+      init: function () {
+        this.el.addEventListener("targetFound", (event) => {
+          var videoEl = this.el.querySelector("a-plane").getAttribute("material").src;
+
+          videoEl.addEventListener('ended', (event) => {
+            this.el.querySelector("a-plane").object3D.visible = false;
+            this.el.querySelector("a-image").setAttribute("visible", true);
+          });
+
+          this.el.querySelector("a-image").addEventListener("click", () => {
+            setTimeout(() => {
+              this.el.querySelector("a-plane").object3D.visible = true;
+            }, 200);
+
+            if (!videoEl) {
+              return;
+            }
+
+            if (videoEl.paused) {
+              videoEl.play();
+              this.el.querySelector("a-image").setAttribute("visible", false);
+            } else {
+              videoEl.pause();
+              this.el.querySelector("a-image").setAttribute("visible", true);
+            }
+          }, { once: true });
+        });
+
+        this.el.addEventListener("targetLost", (event) => {
+          this.el.querySelector("a-plane").getAttribute("material").src.pause();
+          this.el.querySelector("a-plane").object3D.visible = false;
+          this.el.querySelector("a-image").setAttribute("visible", true);
+        });
+      },
+    });
+    </script>
+
+    <style>
+      html,
+      body {
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #main-app {
+        position: relative;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      .a-loader-title {
+        display: none!important;
+      }
+
+      #video-permission {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #d0d0d0;
+        background: url("/neetykub/marma-zagruzka-2022.jpg");
+        background-position: 50% 50%;
+        background-size: cover;
+        z-index: 1000;
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="video-permission"></div>
+    <div id="main-app">
+      <a-scene 
+        mindar-image="imageTargetSrc: /neetykub/regions-targets.mind; maxTrack: 1; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 1;missTolerance: 1"
+embedded
+loading-screen="dotsColor: red; backgroundColor: white"
+color-space="sRGB"
+renderer="colorManagement: true; physicallyCorrectLights: true;"
+vr-mode-ui="enabled: false"
+device-orientation-permission-ui="enabled: false"
+>
+<a-camera cursor="fuse: false; rayOrigin: mouse;" raycaster="far: 10000; objects: .clickable" look-controls="enabled: false"></a-camera>
+<a-assets>
+<?php
+// Генерация путей к ресурсам динамически
+$videoPath = "/neetykub/video_regionov/";
+$imagePath = "/neetykub/video_regionov/gerby_regionov/";      for ($i = 0; $i < 90; $i++) {
+        $videoId = $i + 1;
+        $imageId = $i + 1;
+        $videoSrc = $videoPath . $videoId . "-video" . (get_locale() !== 'ru_RU' ? '_(ENG)' : '') . ".mp4";
+        $imageSrc = $imagePath . $imageId . "-chukotka.svg";
+        ?>
+        <img id="video-preview-<?php echo $i; ?>" src="<?php echo $imageSrc; ?>" />
+        <video id="video-<?php echo $i; ?>" src="<?php echo $videoSrc; ?>"></video>
+      <?php
+      }
+      ?>
+    </a-assets>
+
+    <?php
+    // Генерация сущностей динамически
+    for ($i = 0; $i < 90; $i++) {
+      $targetIndex = $i;
+      $videoLinkId = $i;
+      $previewButtonId = $i;
+      ?>
+      <a-entity mytarget mindar-image-target="targetIndex: <?php echo $targetIndex; ?>">
+        <a-plane id="video-link-<?php echo $videoLinkId; ?>" webkit-playsinline="" playsinline="" visible="false" width="0.8" height="1.422" material="shader: flat; src: #video-<?php echo $videoLinkId; ?>"></a-plane>
+        <a-image id="video-preview-button-<?php echo $previewButtonId; ?>" class="clickable" width="1" height="1" src="#video-preview-<?php echo $previewButtonId; ?>"></a-image>
+      </a-entity>
+    <?php
+    }
+    ?>
+  </a-scene>
+</div>
+
+<script>
+  /**
+   * ПАТЧ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ ДЛЯ ВОСПРОИЗВЕДЕНИЯ ВИДЕО на мобильных устройствах
+   */
+  function _mobileFriendly() {
+    if (AFRAME.utils.device.isMobile()) {
+      var that = this;
+      let video_permission = document.getElementById('video-permission');
+
+      video_permission.style.display = 'block';
+      video_permission.addEventListener("click", function () {
+        video_permission.style.display = 'none';
+      }, false);
+    }
+  }
+  _mobileFriendly();
+</script>
+  </body>
+</html>
